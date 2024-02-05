@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>論文進度條</title>
+    <style>
+        .progress-container {
+            width: 50%;
+            margin: 50px auto;
+            border: 2px solid #000;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .progress-bar-container {
+            position: relative;
+            width: 100%;
+            height: 30px;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background-color: green;
+        }
+
+        .progress-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            color: black;
+        }
+
+        #wordCount {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        input[type="number"] {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="progress-container">
+        <div id="wordCount">
+            <label for="totalWords">論文目標字數：</label>
+            <input type="number" id="totalWords" min="1" value="15000">
+            <br>
+            <label for="currentWords">目前字數：</label>
+            <input type="number" id="currentWords" min="0" value="0">
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-percent" id="progressPercent"></div>
+        </div>
+    </div>
+
+    <script>
+        const totalWordsInput = document.getElementById('totalWords');
+        const currentWordsInput = document.getElementById('currentWords');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+
+        totalWordsInput.addEventListener('input', updateProgressBar);
+        currentWordsInput.addEventListener('input', updateProgressBar);
+
+        function updateProgressBar() {
+            const totalWords = parseInt(totalWordsInput.value);
+            const currentWords = parseInt(currentWordsInput.value);
+
+            if (currentWords > totalWords) {
+                alert('目前字數不能超過論文目字數！');
+                currentWordsInput.value = totalWords;
+            }
+
+            const progress = (currentWords / totalWords) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressPercent.textContent = `${progress.toFixed(2)}%`;
+        }
+    </script>
+</body>
+
+</html>
