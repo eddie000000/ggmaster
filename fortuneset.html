@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資產配置計算器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <style>
+        /* 全域樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #8EC5FC, #E0C3FC);
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+        /* 主容器 */
+        .container {
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        label, input, select {
+            margin-bottom: 10px;
+            display: block;
+            font-size: 16px;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="number"]:focus {
+            border-color: #8EC5FC;
+        }
+        /* 勾選選項 */
+        .option-group {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .option-group label {
+            flex: 1;
+        }
+        .option-group input[type="number"] {
+            width: 80px;
+            margin-left: 10px;
+        }
+        /* 按鈕樣式 */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #8EC5FC;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #5A91E6;
+        }
+        /* 結果區域 */
+        #result {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #result p {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        /* 圖表容器 */
+        #chartContainer {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>資產配置計算器</h2>
+
+        <!-- 輸入月薪 -->
+        <label for="salary">輸入您的月薪：</label>
+        <input type="number" id="salary" placeholder="請輸入月薪" required>
+
+        <!-- 資產配置選項 -->
+        <label>選擇資產配置並設定比例（%）：</label>
+        <div class="option-group">
+            <input type="checkbox" id="investment" name="category" value="投資">
+            <label for="investment">投資</label>
+            <input type="number" id="investmentRatio" placeholder="請輸入比例" min="0" max="100" disabled> %
+        </div>
+        <div class="option-group">
+            <input type="checkbox" id="mortgage" name="category" value="房貸">
+            <label for="mortgage">房貸／房屋支出</label>
+            <input type="number" id="mortgageRatio" placeholder="請輸入比例" min="0" max="100" disabled> %
+        </div>
+        <div class="option-group">
+            <input type="checkbox" id="dreamFund" name="category" value="夢想基金">
+            <label for="dreamFund">夢想基金</label>
+            <input type="number" id="dreamFundRatio" placeholder="請輸入比例" min="0" max="100" disabled> %
+        </div>
+        <div class="option-group">
+            <input type="checkbox" id="learning" name="category" value="學習">
+            <label for="learning">學習／個人成長</label>
+            <input type="number" id="learningRatio" placeholder="請輸入比例" min="0" max="100" disabled> %
+        </div>
+        <div class="option-group">
+            <input type="checkbox" id="dailyExpense" name="category" value="日常開銷">
+            <label for="dailyExpense">日常開銷</label>
+            <input type="number" id="dailyExpenseRatio" placeholder="請輸入比例" min="0" max="100" disabled> %
+        </div>
+
+        <!-- 計算按鈕 -->
+        <button onclick="calculate()">送出</button>
+
+        <!-- 顯示結果的區塊 -->
+        <div id="result"></div>
+        <div id="chartContainer">
+            <canvas id="allocationChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 啟用選取的比例輸入框
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const ratioInput = document.getElementById(this.id + 'Ratio');
+                ratioInput.disabled = !this.checked;
+                if (!this.checked) ratioInput.value = ""; // 清空未選擇的比例欄位
+            });
+        });
+        function calculate() {
+    const salary = parseFloat(document.getElementById('salary').value);
+    if (isNaN(salary) || salary <= 0) {
+        alert("請輸入有效的月薪金額！");
+        return;
+    }
+
+    // 取得選取的資產配置比例
+    const categories = ['投資', '房貸/房租', '夢想基金', '學習', '日常開銷'];
+    const ratios = [
+        parseFloat(document.getElementById('investmentRatio').value) || 0,
+        parseFloat(document.getElementById('mortgageRatio').value) || 0,
+        parseFloat(document.getElementById('dreamFundRatio').value) || 0,
+        parseFloat(document.getElementById('learningRatio').value) || 0,
+        parseFloat(document.getElementById('dailyExpenseRatio').value) || 0
+    ];
+
+    // 檢查比例總和是否為100
+    const totalRatio = ratios.reduce((acc, curr) => acc + curr, 0);
+    if (totalRatio !== 100) {
+        alert("比例總和必須等於 100%！");
+        return;
+    }
+
+    // 計算每個項目的金額
+    const allocations = ratios.map(ratio => (ratio / 100) * salary);
+
+    // 顯示文字結果
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = "<h3>資產配置結果：</h3>";
+    categories.forEach((category, index) => {
+        resultDiv.innerHTML += `<p>${category}: NT$${allocations[index].toFixed(0)}</p>`;
+    });
+
+    // 繪製圓餅圖
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    if (window.allocationChart) {
+        // window.allocationChart.clear(); // 清除舊的資料
+        // window.allocationChart.destroy(); // 移除舊的圖表
+        window.allocationChart = null;
+    }
+    // 註冊 datalabels
+    Chart.register(ChartDataLabels);
+    window.allocationChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: categories,
+            datasets: [{
+                data: allocations,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+            legend: {
+                position: 'top',
+            },
+            datalabels: {
+                formatter: (value) => `NT$${value.toFixed(0)}`, // 顯示金額
+                color: '#fff', // 字體顏色
+                font: {
+                weight: 'bold'
+                }
+            }
+            }
+        }
+
+    });
+}
+    </script>
+</body>
+</html>
